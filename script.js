@@ -97,21 +97,8 @@ setTimeout(typeText, 1000);
 // ===========================
 // Navigation
 // ===========================
-// Navbar scroll effect
-window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-    } else {
-        navbar.classList.remove('scrolled');
-    }
-    
-    // Show/hide scroll to top button
-    if (window.scrollY > 300) {
-        scrollTop.classList.add('visible');
-    } else {
-        scrollTop.classList.remove('visible');
-    }
-});
+// Initial check
+animateOnScroll();
 
 // Mobile menu toggle
 navToggle.addEventListener('click', () => {
@@ -201,85 +188,115 @@ const animateOnScroll = () => {
     });
 };
 
-// Initial check
-animateOnScroll();
-
-// Check on scroll
-window.addEventListener('scroll', animateOnScroll);
-
 // ===========================
 // Animated Counters
 // ===========================
-const animateCounters = () => {
-    const counters = document.querySelectorAll('.stat-number');
-    let animated = false;
-    
-    const startCounting = () => {
-        if (animated) return;
-        
-        const counterSection = document.querySelector('.stats-container');
-        const sectionTop = counterSection.getBoundingClientRect().top;
-        const windowHeight = window.innerHeight;
-        
-        if (sectionTop < windowHeight - 100) {
-            animated = true;
-            
-            counters.forEach(counter => {
-                const target = parseInt(counter.getAttribute('data-target'));
-                const duration = 2000;
-                const increment = target / (duration / 16);
-                let current = 0;
-                
-                const updateCounter = () => {
-                    current += increment;
-                    if (current < target) {
-                        counter.textContent = Math.ceil(current);
-                        requestAnimationFrame(updateCounter);
-                    } else {
-                        counter.textContent = target;
-                    }
-                };
-                
-                updateCounter();
-            });
-        }
-    };
-    
-    window.addEventListener('scroll', startCounting);
-    startCounting(); // Check on load
-};
+let countersAnimated = false;
 
-animateCounters();
+const animateCounters = () => {
+    if (countersAnimated) return;
+    
+    const counters = document.querySelectorAll('.stat-number');
+    const counterSection = document.querySelector('.stats-container');
+    if (!counterSection) return;
+    
+    const sectionTop = counterSection.getBoundingClientRect().top;
+    const windowHeight = window.innerHeight;
+    
+    if (sectionTop < windowHeight - 100) {
+        countersAnimated = true;
+        
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            const duration = 2000;
+            const increment = target / (duration / 16);
+            let current = 0;
+            
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    counter.textContent = Math.ceil(current);
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    counter.textContent = target;
+                }
+            };
+            
+            updateCounter();
+        });
+    }
+};
 
 // ===========================
 // Skills Progress Bars
 // ===========================
+let skillBarsAnimated = false;
+
 const animateSkillBars = () => {
+    if (skillBarsAnimated) return;
+    
     const skillBars = document.querySelectorAll('.progress-bar');
-    let animated = false;
+    const skillsSection = document.querySelector('.skills');
+    if (!skillsSection) return;
     
-    const startAnimation = () => {
-        if (animated) return;
-        
-        const skillsSection = document.querySelector('.skills');
-        const sectionTop = skillsSection.getBoundingClientRect().top;
-        const windowHeight = window.innerHeight;
-        
-        if (sectionTop < windowHeight - 200) {
-            animated = true;
-            
-            skillBars.forEach(bar => {
-                const progress = bar.getAttribute('data-progress');
-                bar.style.width = `${progress}%`;
-            });
-        }
-    };
+    const sectionTop = skillsSection.getBoundingClientRect().top;
+    const windowHeight = window.innerHeight;
     
-    window.addEventListener('scroll', startAnimation);
-    startAnimation(); // Check on load
+    if (sectionTop < windowHeight - 200) {
+        skillBarsAnimated = true;
+        
+        skillBars.forEach(bar => {
+            const progress = bar.getAttribute('data-progress');
+            bar.style.width = `${progress}%`;
+        });
+    }
 };
 
-animateSkillBars();
+// ===========================
+// Consolidated Scroll Handler
+// ===========================
+const handleScroll = () => {
+    // Navbar scroll effect
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+    
+    // Show/hide scroll to top button
+    if (window.scrollY > 300) {
+        scrollTop.classList.add('visible');
+    } else {
+        scrollTop.classList.remove('visible');
+    }
+    
+    // Animate elements on scroll
+    animateOnScroll();
+    
+    // Animate counters
+    animateCounters();
+    
+    // Animate skill bars
+    animateSkillBars();
+    
+    // Parallax effect on hero
+    const scrolled = window.pageYOffset;
+    const heroContent = document.querySelector('.hero-content');
+    if (heroContent && scrolled < window.innerHeight) {
+        heroContent.style.transform = `translateY(${scrolled * 0.5}px)`;
+        heroContent.style.opacity = 1 - (scrolled / 700);
+    }
+    
+    // Update active navigation links
+    updateActiveNavLinks();
+};
+
+// Debounced scroll handler
+const debouncedScrollHandler = debounce(handleScroll, 50);
+window.addEventListener('scroll', debouncedScrollHandler);
+
+// Initial check on load
+handleScroll();
 
 // ===========================
 // Scroll to Top
@@ -387,15 +404,7 @@ if (window.innerWidth > 768) {
 // ===========================
 // Parallax Effect on Hero
 // ===========================
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const heroContent = document.querySelector('.hero-content');
-    
-    if (heroContent && scrolled < window.innerHeight) {
-        heroContent.style.transform = `translateY(${scrolled * 0.5}px)`;
-        heroContent.style.opacity = 1 - (scrolled / 700);
-    }
-});
+// Handled in consolidated scroll handler
 
 // ===========================
 // Add ripple effect to buttons
@@ -428,22 +437,6 @@ document.querySelectorAll('.btn').forEach(button => {
     });
 });
 
-// Add ripple animation to CSS
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes ripple {
-        from {
-            transform: scale(0);
-            opacity: 1;
-        }
-        to {
-            transform: scale(4);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
-
 // ===========================
 // Intersection Observer for better performance
 // ===========================
@@ -470,7 +463,7 @@ if ('IntersectionObserver' in window) {
 const sections = document.querySelectorAll('section[id]');
 const navLinks = document.querySelectorAll('.nav-link');
 
-window.addEventListener('scroll', () => {
+function updateActiveNavLinks() {
     let current = '';
     
     sections.forEach(section => {
@@ -487,7 +480,7 @@ window.addEventListener('scroll', () => {
             link.classList.add('active');
         }
     });
-});
+}
 
 // ===========================
 // Console message
@@ -510,13 +503,6 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
-
-// Apply debounce to scroll-heavy functions
-const debouncedScrollHandler = debounce(() => {
-    animateOnScroll();
-}, 50);
-
-window.addEventListener('scroll', debouncedScrollHandler);
 
 // ===========================
 // Page visibility detection
